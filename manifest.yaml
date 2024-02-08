@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    bear-type: polar-bear
+  name: dancing-bears-svc
+  namespace: bear-system
+spec:
+  ports:
+  - name: app
+    port: 443
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    bear-type: polar-bear
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    bear-type: polar-bear
+  name: dancing-bears-preview-svc
+  namespace: bear-system
+spec:
+  ports:
+  - name: app
+    port: 443
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    bear-type: polar-bear
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  creationTimestamp: null
+  labels:
+    bear-type: polar-bear
+  name: dancing-bears
+  namespace: bear-system
+spec:
+  replicas: 3
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      bear-type: polar-bear
+  strategy:
+    blueGreen:
+      activeService: dancing-bears-svc
+      autoPromotionEnabled: true
+      previewService: dancing-bears-preview-svc
+      scaleDownDelaySeconds: 60
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        bear-type: polar-bear
+    spec:
+      containers:
+      - image: ghcr.io/nickpatton/some-dancing-bears:v0.0.4
+        imagePullPolicy: IfNotPresent
+        name: dancing-bears
+        ports:
+        - containerPort: 5000
+          name: app
+        resources: {}
+      restartPolicy: Always
+status:
+  blueGreen: {}
+  canary: {}
